@@ -4,7 +4,7 @@
 
 **Whisper large-v3-class multilingual ASR that actually streams, on your CPU.**
 
-[![Hugging Face](https://img.shields.io/badge/%F0%A4%97%97%20ONNX%20weights-codavidgarcia%2Fnemotron--3.5--asr--streaming--0.6b--onnx-yellow)](https://huggingface.co/codavidgarcia/nemotron-3.5-asr-streaming-0.6b-onnx)
+[![Hugging Face](https://img.shields.io/badge/ONNX%20weights-Hugging%20Face-yellow?logo=huggingface)](https://huggingface.co/codavidgarcia/nemotron-3.5-asr-streaming-0.6b-onnx)
 [![License: Apache 2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
 [![Weights: OpenMDW-1.1](https://img.shields.io/badge/weights-OpenMDW--1.1-green)](https://openmdw.ai/license/1-1/)
 [![ONNX opset 17](https://img.shields.io/badge/ONNX-opset_17-005CED?logo=onnx)](https://onnx.ai/)
