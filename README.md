@@ -13,7 +13,7 @@
 [Model weights](https://huggingface.co/codavidgarcia/nemotron-3.5-asr-streaming-0.6b-onnx) ·
 [Base model (NVIDIA)](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) ·
 [Validation](#validation) ·
-[Making of](#the-making-of-the-bug-that-only-appeared-after-the-first-second)
+[Debugging notes](#debugging-notes-the-kv-cache-ordering-bug)
 
 <img src="assets/demo_streaming.gif" alt="Live streaming demo: partial transcripts appearing in real time from the ONNX fp16 engine on CPU" width="850"/>
 
@@ -125,35 +125,30 @@ and 1120 ms (cross-checked against HF streaming at the same lookahead).
 "Parity" here means fidelity of the conversion. For absolute ASR accuracy,
 see NVIDIA's FLEURS tables on the base model card.
 
-## The making of: the bug that only appeared after the first second
+## Debugging notes: the K/V cache-ordering bug
 
-The most instructive part of this export was a bug that produced **perfect
-transcriptions for the first chunk and garbage afterwards**. Exactly the
-kind of bug that survives naive testing, because smoke tests pass.
+The only non-trivial bug in this export. Transcriptions were correct for the
+first chunk and garbage after that.
 
-The exported encoder threads 96 cache tensors (K + V across 24 layers, plus
-conv caches) through the ONNX graph as positional inputs/outputs. The first
-version built the cache name list **interleaved** (`k0, v0, k1, v1, ...`)
-while the graph body unpacked them **blocked** (`caches[0:24]` for K,
-`caches[24:48]` for V). Every layer from 1 up received another layer's K as
-its V.
+Root cause: the 96 cache tensors (K + V across 24 layers, plus conv caches)
+go through the ONNX graph as positional inputs/outputs. The first version
+listed them interleaved (`k0, v0, k1, v1, ...`) while the graph body unpacks
+them blocked (`caches[0:24]` = K, `caches[24:48]` = V). Every layer from 1
+up got another layer's K as its V.
 
-**Why chunk 0 was flawless:** all caches start as zeros, and any permutation
-of zeros is still zeros. The bug was invisible until the first cache
-carry-over, and it poisoned the decoder state permanently. A 60-second file
-produced just *"Actually, that's a lot."*
+Chunk 0 was unaffected because all caches start as zeros, and any permutation
+of zeros is still zeros. The decoder state was corrupted from the first
+carry-over onward. A 60 s file produced just *"Actually, that's a lot."*
 
-**Why the obvious suspect was innocent:** before touching anything, we tested
-the Transformer-XL relative-position theory numerically (warm-up
+Ruled out first: the Transformer-XL relative-position theory (warm-up
 `cached_frames` growing 4, 8, ... vs a fixed window of 56). The warm-up
-encoding turned out to be an exact centered slice of the full one, diff 0.0.
-That clean counter-example saved hours of fixing the wrong thing. The real
-culprit surfaced by localizing the first divergent layer, recording the
-actual attention inputs, and finding V off by 430 while K matched to 3e-5.
+encoding is an exact centered slice of the full one (diff 0.0), so that path
+was fine. The actual cause showed up by localizing the first divergent
+layer and recording the attention inputs: V off by 430, K matching to 3e-5.
 
-The fix was one loop (`_cache_shapes()` in `export/export_onnx.py`). The
-debugging probes live in `tools/` (layer-localized parity, cache sweep,
-attention replay, input recorder), kept for the next divergence.
+Fix: one loop in `_cache_shapes()` (`export/export_onnx.py`). The debug
+probes are in `tools/` (layer-localized parity, cache sweep, attention
+replay, input recorder).
 
 ## Repo layout
 
@@ -164,7 +159,7 @@ engine/nemotron_onnx_streaming.py   numpy+onnxruntime streaming engine / CLI
 validation/parity.py       WER-parity harness (HF reference vs ONNX, per-file + aggregate)
 validation/make_reference.py        generate HF reference transcripts
 validation/hf_streaming_reference.py  HF streaming reference at a given lookahead
-tools/                     debugging probes from the making-of
+tools/                     debugging probes (see Debugging notes)
 outputs/                   (git-ignored) exported graphs
 ```
 
