@@ -1,0 +1,14 @@
+# Exported ONNX artifacts (large; regenerated with export/export_onnx.py)
+outputs/
+# HuggingFace distribution package (uploaded to the HF model repo, not git)
+dist-hf/
+# Fetched transformers reference sources (kept locally for debugging)
+_reference/
+# Validation data: real meeting recordings and derived transcripts (private)
+validation/samples/
+validation/reference.json
+validation/report_*.json
+ref_s2.txt
+# Python
+__pycache__/
+*.pyc

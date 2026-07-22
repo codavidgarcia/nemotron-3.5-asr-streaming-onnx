@@ -1,0 +1,22 @@
+# Nemotron 3.5 ASR — unofficial ONNX export spike
+#
+# Export-time dependencies (need a GPU-capable box; ~2.5 GB for torch+weights).
+# On CUDA machines install torch with the matching CUDA wheel first, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu126
+torch>=2.6
+transformers>=5.13.0        # first release with Nemotron3_5Asr (AutoModelForRNNT)
+librosa>=0.10               # used by the HF feature extractor at export/validation time
+onnx>=1.17
+onnxruntime>=1.20
+# For GPU inference with the ONNX engine, install onnxruntime-gpu instead:
+#   pip install onnxruntime-gpu>=1.20
+numpy>=1.26
+scipy>=1.11                 # resampling helper in transcribe_file / parity
+soundfile>=0.12
+sentencepiece>=0.2          # required by the HF tokenizer for the checkpoint
+#
+# Quantization (export/quantize.py)
+onnxmltools>=1.12           # fp16 conversion (optional, --fp16)
+#
+# Validation (validation/parity.py)
+jiwer>=3.0
