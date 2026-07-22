@@ -175,7 +175,7 @@ reproduce and verify everything.
 
 - [ ] int8 static quantization with calibration (dynamic int8 measurably degrades WER)
 - [ ] Deduplicate encoder weights across chunk sizes (one shared external-data store)
-- [ ] sherpa-onnx C++ port ([sherpa-onnx#3573](https://github.com/k2-fsa/sherpa-onnx/issues/3573)). The engine is meant as the reference implementation
+- [x] sherpa-onnx support for this model — landed upstream in June 2026 ([sherpa-onnx#3664](https://github.com/k2-fsa/sherpa-onnx/issues/3664), PR #3671)
 - [ ] Word-level timestamps, batched streaming, CUDA-EP tuning
 
 ## Credits and license
